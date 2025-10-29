@@ -1,63 +1,49 @@
-# app.py
 from flask import Flask, request, jsonify
-import random
+from flask_cors import CORS
 
 app = Flask(__name__)
+# ✅ Allow frontend requests
+CORS(app, origins=["https://stocksphere-kappa.vercel.app", "http://localhost:3000"])
 
-# Stock recommendations based on risk type
-STOCKS = {
-    "low": [
-        {"name": "HDFC Bank", "ticker": "HDFCBANK.NS"},
-        {"name": "Infosys", "ticker": "INFY.NS"},
-        {"name": "ITC Ltd", "ticker": "ITC.NS"},
-        {"name": "Tata Consultancy Services", "ticker": "TCS.NS"},
-        {"name": "Hindustan Unilever", "ticker": "HINDUNILVR.NS"},
-    ],
-    "medium": [
-        {"name": "Reliance Industries", "ticker": "RELIANCE.NS"},
-        {"name": "Bharti Airtel", "ticker": "BHARTIARTL.NS"},
-        {"name": "ICICI Bank", "ticker": "ICICIBANK.NS"},
-        {"name": "Larsen & Toubro", "ticker": "LT.NS"},
-        {"name": "Axis Bank", "ticker": "AXISBANK.NS"},
-    ],
-    "high": [
-        {"name": "Zomato", "ticker": "ZOMATO.NS"},
-        {"name": "Paytm", "ticker": "PAYTM.NS"},
-        {"name": "Nykaa", "ticker": "NYKAA.NS"},
-        {"name": "Adani Enterprises", "ticker": "ADANIENT.NS"},
-        {"name": "Tata Motors", "ticker": "TATAMOTORS.NS"},
-    ],
-}
-
-@app.route("/")
-def home():
-    return jsonify({"message": "Welcome to StockSphere API", "status": "Running"})
-
-@app.route("/recommend", methods=["POST"])
-def recommend_stocks():
+@app.route("/", methods=["POST"])
+def recommend():
     data = request.get_json()
 
-    # Extract inputs
-    age_group = data.get("age_group")
-    experience = data.get("experience")
-    horizon = data.get("horizon")
-    risk = data.get("risk_tolerance", "medium").lower()
+    # Extract user inputs
+    age_group = data.get("age_group", "")
+    experience = data.get("experience", "")
+    horizon = data.get("horizon", "")
+    risk_tolerance = data.get("risk_tolerance", "")
 
-    # Select stock list based on risk level
-    stocks = STOCKS.get(risk, STOCKS["medium"])
-    recommendations = random.sample(stocks, 3)
+    # Simple rule-based logic (replace with your model later)
+    if risk_tolerance.lower() == "low":
+        recommendations = [
+            {"name": "HDFC Bank", "ticker": "HDFCBANK"},
+            {"name": "Infosys", "ticker": "INFY"},
+        ]
+    elif risk_tolerance.lower() == "medium":
+        recommendations = [
+            {"name": "Reliance Industries", "ticker": "RELIANCE"},
+            {"name": "Tata Consultancy Services", "ticker": "TCS"},
+        ]
+    else:
+        recommendations = [
+            {"name": "Adani Enterprises", "ticker": "ADANIENT"},
+            {"name": "Zomato", "ticker": "ZOMATO"},
+        ]
 
-    response = {
-        "profile": {
-            "age_group": age_group,
-            "experience": experience,
-            "horizon": horizon,
-            "risk_tolerance": risk
-        },
-        "recommendations": recommendations
+    profile = {
+        "age_group": age_group,
+        "experience": experience,
+        "horizon": horizon,
+        "risk_tolerance": risk_tolerance,
     }
 
-    return jsonify(response)
+    return jsonify({"profile": profile, "recommendations": recommendations})
+
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Welcome to StockSphere API!"})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
